@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<sdf version="1.5">
+  <world name="camera_coke2">
+
+    <!-- A global light source -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <!-- A ground plane -->
+    <include>
+      <uri>model://ground_plane</uri>
+      <pose>0 0 -0.0405 0 0 0</pose>
+    </include>
+
+    <!-- camera view -->
+    <gui>
+      <camera name="user_default">
+            <pose>2.75 -1.58 0.75 0 0.29 2.25</pose>
+      </camera>
+    </gui>
+
+    <!-- camera model -->
+    <include>
+      <uri>model://kinect-plugin</uri>
+      <pose>0 0.0 2.5 0 1.5 0 0</pose>
+      <static>True</static>
+    </include>
+    
+    <!-- table model -->
+    <include>
+      <uri>model://table</uri>
+      <static>false</static>
+      <pose>0 0.0 0.3 0 0 0</pose>
+      <static>True</static>
+    </include>
+    
+    <!-- my_box model -->
+    <include>
+      <uri>model://my_box</uri>
+      <static>false</static>
+      <pose>0 0.0 1.5 0 0 0</pose>
+      <static>false</static>
+    </include>
+    
+
+  </world>
+</sdf>
