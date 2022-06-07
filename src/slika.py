@@ -21,23 +21,19 @@ import numpy as np
 # Instantiate CvBridge
 bridge = CvBridge()
 
-def image_callback(data):
+def image_callback(msg):
     rospy.loginfo("Received an image!")
     try:
         # Convert your ROS Image message to OpenCV2
-        cv2_img = bridge.imgmsg_to_cv2(data, "32FC1")
-        depth_array = np.array(cv2_img, dtype=np.float32)
-        cv2.normalize(depth_array, depth_array, 0, 1, cv2.NORM_MINMAX)
-        cv2.imwrite('./src/diplomski/test_slike/depth_image.png', np.floor(depth_array*256))
-        rospy.loginfo(np.max(depth_array))
-        rospy.loginfo(np.min(depth_array))
-    except CvBridgeError as e:
-            raise CvBridgeError(e)
+        cv2_img = bridge.imgmsg_to_cv2(msg, "bgr8")
+        cv2.imwrite('./src/diplomski/test_slike/camera_image.png', cv2_img)
+    except CvBridgeError:
+        rospy.loginfo('greska')
         
 def main():
     rospy.init_node('image_listener')
     # Define your image topic
-    image_topic = "/camera/depth/image_raw"
+    image_topic = "/camera/color/image_raw"
     # Set up your subscriber and define its callback
     rospy.Subscriber(image_topic, Image, image_callback)
     # Spin until ctrl + c
