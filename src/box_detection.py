@@ -23,9 +23,9 @@ bridge = CvBridge()
 
 def detect_box(depth_array: np.array):
     depth = np.copy(depth_array)
-    #cv2.normalize(depth, depth, 0, 1, cv2.NORM_MINMAX)
+    cv2.normalize(depth, depth, 0, 1, cv2.NORM_MINMAX)
     depth = np.floor(255*depth)
-    #depth = np.stack([depth, depth, depth], axis = 2)
+    depth = 255*(depth<99)
     depth = depth.astype(np.uint8)
     # prebacivanje u gray scale
     #imgray = cv2.cvtColor(depth, cv2.COLOR_BGR2GRAY)
@@ -42,7 +42,7 @@ def detect_box(depth_array: np.array):
         if area < ar1:
             area = ar1
             cnt_out = cnt
-    
+    depth = np.stack([depth, depth, depth], axis=2)
     cv2.drawContours(depth, cnt_out, -1, (0,255,0), 3)
     cv2.imwrite('./src/diplomski/test_slike/depth_image.png', depth)
 
@@ -52,10 +52,6 @@ def image_callback(data):
         # Convert your ROS Image message to OpenCV2
         cv2_img = bridge.imgmsg_to_cv2(data, "32FC1")
         depth_array = np.array(cv2_img, dtype=np.float32)
-        depth_array[depth_array>1.5] = 0
-        rospy.loginfo(depth_array.shape)
-        rospy.loginfo(np.max(depth_array))
-        
         detect_box(depth_array)
         
     except CvBridgeError as e:
