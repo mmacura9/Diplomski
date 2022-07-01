@@ -242,30 +242,65 @@ def box_detection(img: np.array, lines: list, a: list, b: list) -> np.array:
     cv2.imwrite('./src/diplomski/test_slike/output.png', img1)
     return P1, P2, P3, P4
 
+def avg_cell_depth(img: np.array, grid_start: np.array, i: int, j: int, vx: int, vy: int):
+    suma = 0
+    print(vx, vy)
+    ind1 = vx[0]
+    ind2 = vy[1]
+    vx = vx/vx[0]
+    vy = vy/vy[1]
+    num = 1
+    #print(ind1, ind2)
+    
+    for a in range(int(ind1)):
+        for b in range(int(ind2)):
+            x = grid_start[i, j] + a* vx + b*vy
+            suma = suma + img[int(x[1]), int(x[0])]
+            print(x)
+            num = num+1
+    return suma/num
+
+def gausian_func(M: float, sigma: float, x: float) -> float:
+    const = 1/math.sqrt(2*math.pi*sigma**2)
+    e = math.exp(-0.5*(x-M)**2/sigma**2)
+    return const*e
+
 def main1(depth_array: np.array):
     depth = np.copy(depth_array)
     cv2.normalize(depth, depth, 0, 1, cv2.NORM_MINMAX)
     depth = np.floor(255*depth)
-    depth1 = np.copy(depth)
-    depth1 = depth1.astype(np.uint8)
-    cv2.imwrite('./src/diplomski/test_slike/depth.png', depth1)
-    depth = 255*(depth<99)
-    depth = depth.astype(np.uint8)
+    #depth1 = np.copy(depth)
+    #depth1 = depth1.astype(np.uint8)
+    #cv2.imwrite('./src/diplomski/test_slike/depth.png', depth1)
     
-    # prebacivanje u binarnu sliku
-    ret, thresh = cv2.threshold(depth, 100, 255, 0)
+    #imgray = cv2.cvtColor(depth, cv2.COLOR_BGR2GRAY)
+    depth = depth.astype(np.uint8)
+    ret, thresh = cv2.threshold(depth, 90, 255, 0)
+    thresh = 255 - thresh
     
     # nalazenje kontura
-    contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     
     # nalazenje najvece konture po povrsini
     area = 0
     cnt_out = contours[0]
-    for cnt in contours:
-        ar1 = cv2.contourArea(cnt)
+    cnt_ind = 0
+    for i in range(len(contours)):
+        ar1 = cv2.contourArea(contours[i])
         if area < ar1:
             area = ar1
-            cnt_out = cnt
+            cnt_out = contours[i]
+            cnt_ind = i
+    
+    area = 0
+    # nalazenje najvece konture unutar najvece konture na slici
+    for i in range(len(contours)):
+        if hierarchy[0, i, 3] == cnt_ind:
+            ar1 = cv2.contourArea(contours[i])
+            if area < ar1:
+                area = ar1
+                cnt_out = contours[i]
+                
     rect = cv2.minAreaRect(cnt_out)
     box = cv2.boxPoints(rect)
     box = np.int0(box)
@@ -298,15 +333,14 @@ def main1(depth_array: np.array):
             img1[grid_start[i, j, 1], grid_start[i, j, 0]] = 255
             
     cv2.imwrite('./src/diplomski/test_slike/grid.png', img1)
-    #cnt_out = cnt_out[:, 0, :].tolist()
-    #lines = split_and_merge(cnt_out)
-    #a = []
-    #b = []
-    #for line in lines:
-        #a1, b1 = np.polyfit(np.array(line)[:, 0], np.array(line)[:, 1], 1)
-        #a = a + [a1]
-        #b = b + [b1]
-    #box = box_detection(depth, lines, a, b)
+    avg_depth = np.zeros([20, 20])
+    
+    for i in range(grid_start.shape[0]):
+        for j in range(grid_start.shape[1]):
+            avg_depth[i, j] = avg_cell_depth(depth, grid_start, i, j, v1, v2)
+            
+    print(np.max(avg_depth))
+    print(np.min(avg_depth))
 
 def image_callback(data):
     rospy.loginfo("Received an image!")
