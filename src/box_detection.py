@@ -246,6 +246,9 @@ def main1(depth_array: np.array):
     depth = np.copy(depth_array)
     cv2.normalize(depth, depth, 0, 1, cv2.NORM_MINMAX)
     depth = np.floor(255*depth)
+    depth1 = np.copy(depth)
+    depth1 = depth1.astype(np.uint8)
+    cv2.imwrite('./src/diplomski/test_slike/depth.png', depth1)
     depth = 255*(depth<99)
     depth = depth.astype(np.uint8)
     
@@ -265,10 +268,36 @@ def main1(depth_array: np.array):
             cnt_out = cnt
     rect = cv2.minAreaRect(cnt_out)
     box = cv2.boxPoints(rect)
-    print(box)
     box = np.int0(box)
     cv2.drawContours(depth, [box], 0, (0, 0, 255), 2)
     cv2.imwrite('./src/diplomski/test_slike/output.png', depth)
+    p1 = np.array(box[0])
+    p2 = np.array(box[1])
+    p3 = np.array(box[3])
+    
+    v1 = (p2-p1)/20
+    v2 = (p3-p1)/20
+    tackex = []
+    tackey =[]
+    p11 = np.copy(p1)
+    p12 = np.copy(p1)
+    for i in range(20):
+        p11 = p11 + v1
+        p12 = p12 + v2
+        tackex.append(p11)
+        tackey.append(p12)
+        
+    grid_start = np.zeros([20, 20, 2], dtype='int')
+    for i in range(20):
+        for j in range(20):
+            grid_start[i, j, :] = np.floor(tackex[i]+v2*j)
+            
+    img1 = np.zeros(depth.shape)
+    for i in range(20):
+        for j in range(20):
+            img1[grid_start[i, j, 1], grid_start[i, j, 0]] = 255
+            
+    cv2.imwrite('./src/diplomski/test_slike/grid.png', img1)
     #cnt_out = cnt_out[:, 0, :].tolist()
     #lines = split_and_merge(cnt_out)
     #a = []
