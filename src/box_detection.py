@@ -1,14 +1,4 @@
 #!/usr/bin/env python3
-# Copyright (c) 2015, Rethink Robotics, Inc.
-
-# Using this CvBridge Tutorial for converting
-# ROS images to OpenCV2 images
-# http://wiki.ros.org/cv_bridge/Tutorials/ConvertingBetweenROSImagesAndOpenCVImagesPython
-
-# Using this OpenCV2 tutorial for saving Images:
-# http://opencv-python-tutroals.readthedocs.org/en/latest/py_tutorials/py_gui/py_image_display/py_image_display.html
-
-# rospy for the subscriber
 import rospy
 # ROS Image message
 from sensor_msgs.msg import Image
@@ -17,9 +7,11 @@ from cv_bridge import CvBridge, CvBridgeError
 # OpenCV2 for saving an image
 import cv2
 import numpy as np
+import math
 
 # Instantiate CvBridge
 bridge = CvBridge()
+grid = np.zeros([20, 20])
 
 def distance(P1: np.array, P2: np.array, P3: np.array) -> float:
     """
@@ -242,36 +234,59 @@ def box_detection(img: np.array, lines: list, a: list, b: list) -> np.array:
     cv2.imwrite('./src/diplomski/test_slike/output.png', img1)
     return P1, P2, P3, P4
 
+def point_order(box: list) -> tuple:
+    box = np.array(box)
+    avg = np.mean(box, axis = 0)
+    p1 = np.zeros(2)
+    p2 = np.zeros(2)
+    p3 = np.zeros(2)
+    p4 = np.zeros(2)
+    for point in box:
+        if point[0]<=avg[0] and point[1]>=avg[1]:
+            p1 = point
+        if point[0]<=avg[0] and point[1]<=avg[1]:
+            p2 = point
+        if point[0]>=avg[0] and point[1]<=avg[1]:
+            p3 = point
+        if point[0]>=avg[0] and point[1]>=avg[1]:
+            p4 = point
+    return p1, p2, p3, p4
+
 def avg_cell_depth(img: np.array, grid_start: np.array, i: int, j: int, vx: int, vy: int):
     suma = 0
-    print(vx, vy)
     ind1 = vx[0]
     ind2 = vy[1]
     vx = vx/vx[0]
     vy = vy/vy[1]
     num = 1
-    #print(ind1, ind2)
     
     for a in range(int(ind1)):
         for b in range(int(ind2)):
             x = grid_start[i, j] + a* vx + b*vy
             suma = suma + img[int(x[1]), int(x[0])]
-            print(x)
             num = num+1
     return suma/num
 
-def gausian_func(M: float, sigma: float, x: float) -> float:
+def gaussian_func(M: float, sigma: float, x: float) -> float:
     const = 1/math.sqrt(2*math.pi*sigma**2)
     e = math.exp(-0.5*(x-M)**2/sigma**2)
     return const*e
 
+def update_grid(grid: np.array, img: np.array, grid_start: np.array, vx: np.array, vy: np.array) -> np.array:
+    for i in range(20):
+        for j in range(20):
+            avg_depth = avg_cell_depth(img, grid_start, i, j, vx, vy)
+            #print(avg_depth)
+            p = gaussian_func(85, 5, avg_depth) / (1.1* gaussian_func(85, 5, 85))
+            #print(avg_depth, p)
+            grid[i, j] = grid[i, j] + math.log(p/(1 - p))
+    return grid
+
 def main1(depth_array: np.array):
+    global grid
     depth = np.copy(depth_array)
     cv2.normalize(depth, depth, 0, 1, cv2.NORM_MINMAX)
     depth = np.floor(255*depth)
-    #depth1 = np.copy(depth)
-    #depth1 = depth1.astype(np.uint8)
-    #cv2.imwrite('./src/diplomski/test_slike/depth.png', depth1)
     
     #imgray = cv2.cvtColor(depth, cv2.COLOR_BGR2GRAY)
     depth = depth.astype(np.uint8)
@@ -306,9 +321,8 @@ def main1(depth_array: np.array):
     box = np.int0(box)
     cv2.drawContours(depth, [box], 0, (0, 0, 255), 2)
     cv2.imwrite('./src/diplomski/test_slike/output.png', depth)
-    p1 = np.array(box[0])
-    p2 = np.array(box[1])
-    p3 = np.array(box[3])
+    
+    p3, p1, p2, _ = point_order(box)
     
     v1 = (p2-p1)/20
     v2 = (p3-p1)/20
@@ -333,15 +347,15 @@ def main1(depth_array: np.array):
             img1[grid_start[i, j, 1], grid_start[i, j, 0]] = 255
             
     cv2.imwrite('./src/diplomski/test_slike/grid.png', img1)
-    avg_depth = np.zeros([20, 20])
-    
-    for i in range(grid_start.shape[0]):
-        for j in range(grid_start.shape[1]):
-            avg_depth[i, j] = avg_cell_depth(depth, grid_start, i, j, v1, v2)
-            
-    print(np.max(avg_depth))
-    print(np.min(avg_depth))
-
+    grid = update_grid(grid, depth, grid_start, v1, v2)
+    #print(grid)
+    bel = 1 - 1/(1-np.exp(grid))
+    img1 = np.zeros([400, 400])
+    for i in range(20):
+        for j in range(20):
+            img1[20*i:20*(i+1), 20*j:20*(j+1)] = int(bel[i, j]*255)
+    cv2.imwrite('./src/diplomski/test_slike/bel.png', img1)
+       
 def image_callback(data):
     rospy.loginfo("Received an image!")
     try:
