@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <sdf version="1.5">
-  <world name="camera_coke2">
+  <world name="diplomski_svet_obstacle">
 
     <!-- A global light source -->
     <include>
@@ -24,14 +24,24 @@
     <include>
       <uri>model://kinect-plugin</uri>
       <pose>0 0.0 2.5 0 1.5 0 0</pose>
+      <static>True</static>a
+    </include>
+    
+    <!-- table1 model -->
+    <include>
+      <name>table1</name>
+      <uri>model://table</uri>
+      <static>false</static>
+      <pose>0 0.0 0.0 0 0 0</pose>
       <static>True</static>
     </include>
     
-    <!-- table model -->
+    <!-- table2 model -->
     <include>
+      <name>table2</name>
       <uri>model://table</uri>
       <static>false</static>
-      <pose>0 0.0 0 0 0 0</pose>
+      <pose>0 -1.1 -0.0 0 0 0</pose>
       <static>True</static>
     </include>
     
@@ -39,15 +49,34 @@
     <include>
       <uri>model://my_box</uri>
       <static>false</static>
-      <pose>0 0.0 1.1 0 0 0.7</pose>
+      <pose>0 0.0 1.05 0 0 0</pose>
+      <static>false</static>
     </include>
     
-    <!-- cube model-->
+    <!-- cricket_ball model -->
     <include>
-    	<uri> model://wood_cube_10cm</uri>
-    	<static> false </static>
-    	<pose> 0 0.0 1.1 0 0 0 </pose>
+      <uri>model://cricket_ball</uri>
+      <static>false</static>
+      <pose>0 -0.8 1 0 0 0</pose>
+      <static>false</static>
     </include>
 
+    <!-- cube_20k model -->
+    <include>
+      <name>wood_cube</name>
+      <uri>model://wood_cube_5cm</uri>
+      <static>false</static>
+      <pose>-0.2 -0.8 1 0 0 0</pose>
+      <static>false</static>
+    </include>
+
+<!-- cube_20k model -->
+    <include>
+      <name>wood_cube1</name>
+      <uri>model://wood_cube_5cm</uri>
+      <static>false</static>
+      <pose>0 0.0 2 0 0 0</pose>
+      <static>false</static>
+    </include>
   </world>
 </sdf>
