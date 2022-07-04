@@ -73,7 +73,7 @@
 <!-- cube_20k model -->
     <include>
       <name>wood_cube1</name>
-      <uri>model://wood_cube_5cm</uri>
+      <uri>model://wood_cube_10cm</uri>
       <static>false</static>
       <pose>0 0.0 2 0 0 0</pose>
       <static>false</static>

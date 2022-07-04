@@ -8,10 +8,12 @@ from cv_bridge import CvBridge, CvBridgeError
 import cv2
 import numpy as np
 import math
+from std_msgs.msg import Float64MultiArray
 
 # Instantiate CvBridge
 bridge = CvBridge()
 grid = np.zeros([20, 20])
+pab = 0
 
 def distance(P1: np.array, P2: np.array, P3: np.array) -> float:
     """
@@ -288,7 +290,7 @@ def empty_grid(goal_grid: np.array) -> bool:
 def deg2rad(x: float) -> float:
     return x*math.pi/180
 
-def placing_algorithm(grid: np.array, d: float, grid_start: np.array, depth_array: np.array) -> tuple:
+def placing_algorithm(grid: np.array, d: float, grid_start: np.array, depth_array: np.array) -> list:
     rows = 20
     columns = 20
     D = math.ceil(d/(0.5/20)) # 0.5m je velicina kutije, pa je Grid_resolution = 0.5/20
@@ -309,10 +311,11 @@ def placing_algorithm(grid: np.array, d: float, grid_start: np.array, depth_arra
                 dist1 = distance*math.sin(alpha)
                 x_coordinate = dist1*math.cos(gamma)
                 y_coordinate = dist1*math.sin(gamma)
-                return x_coordinate, y_coordinate, z_coordinate
+                return [x_coordinate, y_coordinate, z_coordinate]
 
 def main1(depth_array: np.array):
     global grid
+    global pab
     depth = np.copy(depth_array)
     print(depth.shape)
     cv2.normalize(depth, depth, 0, 1, cv2.NORM_MINMAX)
@@ -378,7 +381,8 @@ def main1(depth_array: np.array):
         for j in range(20):
             img1[20*i:20*(i+1), 20*j:20*(j+1)] = int(bel[i, j]*255)
     cv2.imwrite('./src/diplomski/test_slike/bel.png', img1)
-    print(placing_algorithm(grid, 0.1, grid_start, depth_array))
+    pab.publish(Float64MultiArray(data = np.array(placing_algorithm(grid, 0.1, grid_start, depth_array))))
+    #print(placing_algorithm(grid, 0.1, grid_start, depth_array))
        
 def image_callback(data):
     rospy.loginfo("Received an image!")
@@ -390,13 +394,15 @@ def image_callback(data):
         
     except CvBridgeError as e:
             raise CvBridgeError(e)
-        
+                
 def main():
+    global pab
     rospy.init_node('image_listener')
     # Define your image topic
     image_topic = "/camera/depth/image_raw"
     # Set up your subscriber and define its callback
     rospy.Subscriber(image_topic, Image, image_callback)
+    pab = rospy.Publisher("/target_coordinates", Float64MultiArray, queue_size=1)
     # Spin until ctrl + c
     rospy.spin()
 
