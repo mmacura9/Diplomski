@@ -81,6 +81,17 @@
 
 
 
+<!-- cube_20k obstacle -->
+    <include>
+      <name>wood_cube_obstacle</name>
+      <uri>model://wood_cube_obstacle</uri>
+      <static>true</static>
+      <pose>-0.2 -0.65 0 0 0 0</pose>
+      <static>true</static>
+    </include>
+
+
+
 
 
 
