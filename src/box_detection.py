@@ -9,6 +9,7 @@ import cv2
 import numpy as np
 import math
 from std_msgs.msg import Float64MultiArray
+import sys
 
 # Instantiate CvBridge
 bridge = CvBridge()
@@ -382,6 +383,7 @@ def main1(depth_array: np.array):
             img1[20*i:20*(i+1), 20*j:20*(j+1)] = int(bel[i, j]*255)
     cv2.imwrite('./src/diplomski/test_slike/bel.png', img1)
     pab.publish(Float64MultiArray(data = np.array(placing_algorithm(grid, 0.1, grid_start, depth_array))))
+    sys.exit()
     #print(placing_algorithm(grid, 0.1, grid_start, depth_array))
        
 def image_callback(data):
