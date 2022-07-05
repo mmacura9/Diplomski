@@ -9,6 +9,7 @@ import cv2
 import numpy as np
 import math
 from std_msgs.msg import Float64MultiArray
+import sys
 
 # Instantiate CvBridge
 bridge = CvBridge()
@@ -406,6 +407,7 @@ def main1(depth_array: np.array):
     cv2.imwrite('./src/diplomski/test_slike/bel.png', img1)
     pab.publish(Float64MultiArray(data = np.array(placing_algorithm(grid, 0.1, grid_start, depth_array, depth))))
     print(placing_algorithm(grid, 0.1, grid_start, depth_array, depth))
+
        
 def image_callback(data):
     rospy.loginfo("Received an image!")
