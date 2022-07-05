@@ -255,20 +255,19 @@ def point_order(box: list) -> tuple:
             p4 = point
     return p1, p2, p3, p4
 
-def avg_cell_depth(img: np.array, grid_start: np.array, i: int, j: int, vx: int, vy: int):
-    suma = 0
+def min_cell_depth(img: np.array, grid_start: np.array, i: int, j: int, vx: int, vy: int):
+    minimum = np.max(img)
     ind1 = vx[0]
     ind2 = vy[1]
     vx = vx/vx[0]
     vy = vy/vy[1]
-    num = 1
-    
     for a in range(int(ind1)):
         for b in range(int(ind2)):
             x = grid_start[i, j] + a* vx + b*vy
-            suma = suma + img[int(x[1]), int(x[0])]
-            num = num+1
-    return suma/num
+            y = img[int(x[1]), int(x[0])]
+            if y < minimum and y != 0:
+                minimum = y
+    return minimum
 
 def gaussian_func(M: float, sigma: float, x: float) -> float:
     const = 1/math.sqrt(2*math.pi*sigma**2)
@@ -278,10 +277,8 @@ def gaussian_func(M: float, sigma: float, x: float) -> float:
 def update_grid(grid: np.array, img: np.array, grid_start: np.array, vx: np.array, vy: np.array) -> np.array:
     for i in range(20):
         for j in range(20):
-            avg_depth = avg_cell_depth(img, grid_start, i, j, vx, vy)
-            #print(avg_depth)
-            p = gaussian_func(85, 5, avg_depth) / (1.1* gaussian_func(85, 5, 85))
-            #print(avg_depth, p)
+            min_depth = min_cell_depth(img, grid_start, i, j, vx, vy)
+            p = gaussian_func(100, 2.5, min_depth) / (1.1* gaussian_func(100, 2.5, 100))
             grid[i, j] = grid[i, j] + math.log(p/(1 - p))
     return grid
 
@@ -326,6 +323,8 @@ def placing_algorithm(grid: np.array, d: float, grid_start: np.array, depth_arra
 def main1(depth_array: np.array):
     global grid
     global pab
+    d = 0.05
+    gripper_size = 0.05
     depth = np.copy(depth_array)
     print(depth.shape)
     cv2.normalize(depth, depth, 0, 1, cv2.NORM_MINMAX)
@@ -403,8 +402,8 @@ def main1(depth_array: np.array):
         for j in range(20):
             img1[20*i:20*(i+1), 20*j:20*(j+1)] = int(bel[i, j]*255)
     cv2.imwrite('./src/diplomski/test_slike/bel.png', img1)
-    pab.publish(Float64MultiArray(data = np.array(placing_algorithm(grid, 0.1, grid_start, depth_array, depth))))
-    print(placing_algorithm(grid, 0.1, grid_start, depth_array, depth))
+    pab.publish(Float64MultiArray(data = np.array(placing_algorithm(grid, d + gripper_size, grid_start, depth_array, depth))))
+    print(placing_algorithm(grid, d + gripper_size, grid_start, depth_array, depth))
 
        
 def image_callback(data):
