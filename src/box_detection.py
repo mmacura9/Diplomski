@@ -316,13 +316,11 @@ def placing_algorithm(grid: np.array, d: float, grid_start: np.array, depth_arra
                 img1[int(y), int(x), 2] = 0
                 
                 cv2.imwrite('./src/diplomski/test_slike/mesto.png', img1)
-                gamma = math.atan2((y-sredina[1]), (x-sredina[0]))
-                print(x, y, x-sredina[1], y-sredina[0], sredina, alpha, gamma, distance)
+                print(x, y, sredina, alpha, distance)
                 print(depth_array[sredina[0], sredina[1]])
                 z_coordinate = distance*math.cos(alpha)
-                dist1 = distance*math.sin(alpha)
-                x_coordinate = dist1*math.sin(gamma)
-                y_coordinate = dist1*math.cos(gamma)
+                x_coordinate = -z_coordinate*math.sin((y-sredina[0])*1.047/640)
+                y_coordinate = -z_coordinate*math.sin((x-sredina[1])*1.047/640)
                 return [x_coordinate, y_coordinate, z_coordinate]
 
 def main1(depth_array: np.array):
