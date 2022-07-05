@@ -290,7 +290,7 @@ def empty_grid(goal_grid: np.array) -> bool:
 def deg2rad(x: float) -> float:
     return x*math.pi/180
 
-def placing_algorithm(grid: np.array, d: float, grid_start: np.array, depth_array: np.array) -> list:
+def placing_algorithm(grid: np.array, d: float, grid_start: np.array, depth_array: np.array, depth) -> list:
     rows = 20
     columns = 20
     D = math.ceil(d/(0.5/20)) # 0.5m je velicina kutije, pa je Grid_resolution = 0.5/20
@@ -299,14 +299,25 @@ def placing_algorithm(grid: np.array, d: float, grid_start: np.array, depth_arra
         for j in range(columns-D):
             goal_grid = grid[i: i+D, j: j+D]
             if empty_grid(goal_grid):
-                x = grid_start[i, j, 0]+D*(0.5/20)
-                y = grid_start[i, j, 1]+D*(0.5/20)
-                alpha = math.sqrt((y/deg2rad(640)*deg2rad(62))**2+(x/deg2rad(480)*deg2rad(48.6))**2)
-                alpha = deg2rad(alpha)
-                distance = depth_array[grid_start[i, j, 0], grid_start[i, j, 1]]
+                x = grid_start[i + D//2, j + D//2, 0]
+                y = grid_start[i + D//2, j + D//2, 1]
                 sredina = np.array(depth_array.shape)//2
+                alpha = math.atan(math.sqrt(math.tan((x-sredina[0])*1.047/640)**2+math.tan((y-sredina[1])*1.047/640)**2))
+                distance = depth_array[int(y), int(x)]
+                
+                img1 = np.zeros([depth.shape[0], depth.shape[1], 3])
+                img1[:, :, 0] = depth
+                img1[:, :, 1] = depth
+                img1[:, :, 2] = depth
+                
+                img1[int(y), int(x), 0] = 255
+                img1[int(y), int(x), 1] = 0
+                img1[int(y), int(x), 2] = 0
+                
+                cv2.imwrite('./src/diplomski/test_slike/mesto.png', img1)
                 gamma = math.atan2((x-sredina[0]), (y-sredina[1]))
-                print(x, y, sredina, alpha, gamma, distance)
+                print(x, y, x-sredina[1], y-sredina[0], sredina, alpha, gamma, distance)
+                print(depth_array[sredina[0], sredina[1]])
                 z_coordinate = distance*math.cos(alpha)
                 dist1 = distance*math.sin(alpha)
                 x_coordinate = dist1*math.cos(gamma)
@@ -357,22 +368,34 @@ def main1(depth_array: np.array):
     
     p3, p1, p2, _ = point_order(box)
     
-    v1 = (p2-p1)/20
-    v2 = (p3-p1)/20
+    v1 = (p2-p1)/21
+    v2 = (p3-p1)/21
     tackex = []
     tackey =[]
     p11 = np.copy(p1)
     p12 = np.copy(p1)
-    for i in range(20):
-        p11 = p11 + v1
-        p12 = p12 + v2
+    for i in range(21):
         tackex.append(p11)
         tackey.append(p12)
+        p11 = p11 + v1
+        p12 = p12 + v2
         
-    grid_start = np.zeros([20, 20, 2], dtype='int')
+    grid_start = np.zeros([21, 21, 2], dtype='int')
+    for i in range(21):
+        for j in range(21):
+            grid_start[i, j, :] = np.floor(tackex[i]+v2*j)
+    grid_start = grid_start[1:, 1:,:]
+    img1 = np.zeros([depth.shape[0], depth.shape[1], 3])
+    img1[:, :, 0] = depth
+    img1[:, :, 1] = depth
+    img1[:, :, 2] = depth
+
     for i in range(20):
         for j in range(20):
-            grid_start[i, j, :] = np.floor(tackex[i]+v2*j)
+            img1[grid_start[i, j, 1], grid_start[i, j, 0], 0] = 255
+            img1[grid_start[i, j, 1], grid_start[i, j, 0], 2] = 0
+            img1[grid_start[i, j, 1], grid_start[i, j, 0], 1] = 0
+    cv2.imwrite('./src/diplomski/test_slike/grid.png', img1)
             
     grid = update_grid(grid, depth, grid_start, v1, v2)
     bel = 1 - 1/(1-np.exp(grid))
@@ -381,8 +404,8 @@ def main1(depth_array: np.array):
         for j in range(20):
             img1[20*i:20*(i+1), 20*j:20*(j+1)] = int(bel[i, j]*255)
     cv2.imwrite('./src/diplomski/test_slike/bel.png', img1)
-    pab.publish(Float64MultiArray(data = np.array(placing_algorithm(grid, 0.1, grid_start, depth_array))))
-    #print(placing_algorithm(grid, 0.1, grid_start, depth_array))
+    pab.publish(Float64MultiArray(data = np.array(placing_algorithm(grid, 0.1, grid_start, depth_array, depth))))
+    print(placing_algorithm(grid, 0.1, grid_start, depth_array, depth))
        
 def image_callback(data):
     rospy.loginfo("Received an image!")
