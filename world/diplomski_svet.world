@@ -23,7 +23,7 @@
     <!-- camera model -->
     <include>
       <uri>model://kinect-plugin</uri>
-      <pose>-0.3 0.0 2.5 0 1.5 0 0</pose>
+      <pose>-0.3 0.0 2.5 0 1.571 0 0</pose>
       <static>True</static>a
     </include>
     
