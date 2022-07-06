@@ -366,23 +366,23 @@ def main1(depth_array: np.array):
     
     p3, p1, p2, _ = point_order(box)
     
-    v1 = (p2-p1)/21
-    v2 = (p3-p1)/21
+    v1 = (p2-p1)/22
+    v2 = (p3-p1)/22
     tackex = []
     tackey =[]
     p11 = np.copy(p1)
     p12 = np.copy(p1)
-    for i in range(21):
+    for i in range(22):
         tackex.append(p11)
         tackey.append(p12)
         p11 = p11 + v1
         p12 = p12 + v2
         
-    grid_start = np.zeros([21, 21, 2], dtype='int')
-    for i in range(21):
-        for j in range(21):
+    grid_start = np.zeros([22, 22, 2], dtype='int')
+    for i in range(22):
+        for j in range(22):
             grid_start[i, j, :] = np.floor(tackex[i]+v2*j)
-    grid_start = grid_start[1:, 1:,:]
+    grid_start = grid_start[2:, 2:, :]
     img1 = np.zeros([depth.shape[0], depth.shape[1], 3])
     img1[:, :, 0] = depth
     img1[:, :, 1] = depth
@@ -394,7 +394,7 @@ def main1(depth_array: np.array):
             img1[grid_start[i, j, 1], grid_start[i, j, 0], 2] = 0
             img1[grid_start[i, j, 1], grid_start[i, j, 0], 1] = 0
     cv2.imwrite('./src/diplomski/test_slike/grid.png', img1)
-            
+    
     grid = update_grid(grid, depth, grid_start, v1, v2)
     bel = 1 - 1/(1-np.exp(grid))
     img1 = np.zeros([400, 400])
