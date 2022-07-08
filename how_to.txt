@@ -1,0 +1,4 @@
+roslaunch panda_gazebo panda_world.launch
+roslaunch panda_sim_moveit sim_move_group.launch
+python3 test_picture.py
+rosrun diplomski box_detection.py

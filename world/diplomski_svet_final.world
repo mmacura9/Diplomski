@@ -1,0 +1,99 @@
+<?xml version="1.0"?>
+<sdf version="1.5">
+  <world name="diplomski_svet_obstacle">
+
+    <!-- A global light source -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <!-- A ground plane -->
+    <include>
+      <uri>model://ground_plane</uri>
+      <pose>0 0 -0.0405 0 0 0</pose>
+    </include>
+
+    <!-- camera view -->
+    <gui>
+      <camera name="user_default">
+            <pose>2.75 -1.58 0.75 0 0.29 2.25</pose>
+      </camera>
+    </gui>
+
+    <!-- camera model -->
+    <include>
+      <uri>model://kinect-plugin</uri>
+      <pose>-0.3 0.0 2.5 0 1.571 0 0</pose>
+      <static>True</static>a
+    </include>
+    
+    <!-- table1 model -->
+    <include>
+      <name>table1</name>
+      <uri>model://table</uri>
+      <static>false</static>
+      <pose>0 0.0 0.0 0 0 0</pose>
+      <static>True</static>
+    </include>
+    
+    <!-- table2 model -->
+    <include>
+      <name>table2</name>
+      <uri>model://table</uri>
+      <static>false</static>
+      <pose>0 -0.83 -0.0 0 0 0</pose>
+      <static>True</static>
+    </include>
+    
+    <!-- my_box model -->
+    <include>
+      <uri>model://my_box</uri>
+      <static>false</static>
+      <pose>-0.3 0.0 1.05 0 0 0</pose>
+      <static>false</static>
+    </include>
+
+    <!-- wood_cube1 -->
+    <include>
+      <name>wood_cube1</name>
+      <uri>model://wood_cube_5cm</uri>
+      <static>false</static>
+      <pose>-0.2 -0.8 1 0 0 0</pose>
+      <static>false</static>
+    </include>
+    <!-- wood_cube2 -->
+    <include>
+      <name>wood_cube2</name>
+      <uri>model://wood_cube_5cm</uri>
+      <static>false</static>
+      <pose>-0.3 -0.8 1 0 0 0</pose>
+      <static>false</static>
+    </include>
+    <!-- wood_cube3 -->
+    <include>
+      <name>wood_cube3</name>
+      <uri>model://wood_cube_5cm</uri>
+      <static>false</static>
+      <pose>-0.4 -0.8 1 0 0 0</pose>
+      <static>false</static>
+    </include>
+    
+<!-- wood_cube4 -->
+    <include>
+      <name>wood_cube4</name>
+      <uri>model://wood_cube_5cm</uri>
+      <static>false</static>
+      <pose>-0.3 0.0 2 0 0 0</pose>
+      <static>false</static>
+    </include>
+    
+    <!-- wood_cube5 -->
+    <include>
+      <name>wood_cube5</name>
+      <uri>model://wood_cube_5cm</uri>
+      <static>false</static>
+      <pose>-0.14 0.16 2 0 0 0</pose>
+      <static>false</static>
+    </include>
+  </world>
+</sdf>

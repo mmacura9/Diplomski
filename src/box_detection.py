@@ -424,8 +424,8 @@ def main():
     # Define your image topic
     image_topic = "/camera/depth/image_raw"
     # Set up your subscriber and define its callback
-    rospy.Subscriber(image_topic, Image, image_callback)
-    pab = rospy.Publisher("/target_coordinates", Float64MultiArray, queue_size=1)
+    rospy.Subscriber(image_topic, Image, image_callback, queue_size=1)
+    pab = rospy.Publisher("/target_coordinates", Float64MultiArray, queue_size=0)
     # Spin until ctrl + c
     rospy.spin()
 
