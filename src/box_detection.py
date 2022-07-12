@@ -255,20 +255,19 @@ def point_order(box: list) -> tuple:
             p4 = point
     return p1, p2, p3, p4
 
-def avg_cell_depth(img: np.array, grid_start: np.array, i: int, j: int, vx: int, vy: int):
-    suma = 0
+def min_cell_depth(img: np.array, grid_start: np.array, i: int, j: int, vx: int, vy: int):
+    minimum = np.max(img)
     ind1 = vx[0]
     ind2 = vy[1]
     vx = vx/vx[0]
     vy = vy/vy[1]
-    num = 1
-    
     for a in range(int(ind1)):
         for b in range(int(ind2)):
             x = grid_start[i, j] + a* vx + b*vy
-            suma = suma + img[int(x[1]), int(x[0])]
-            num = num+1
-    return suma/num
+            y = img[int(x[1]), int(x[0])]
+            if y < minimum and y != 0:
+                minimum = y
+    return minimum
 
 def gaussian_func(M: float, sigma: float, x: float) -> float:
     const = 1/math.sqrt(2*math.pi*sigma**2)
@@ -278,10 +277,8 @@ def gaussian_func(M: float, sigma: float, x: float) -> float:
 def update_grid(grid: np.array, img: np.array, grid_start: np.array, vx: np.array, vy: np.array) -> np.array:
     for i in range(20):
         for j in range(20):
-            avg_depth = avg_cell_depth(img, grid_start, i, j, vx, vy)
-            #print(avg_depth)
-            p = gaussian_func(85, 5, avg_depth) / (1.1* gaussian_func(85, 5, 85))
-            #print(avg_depth, p)
+            min_depth = min_cell_depth(img, grid_start, i, j, vx, vy)
+            p = gaussian_func(100, 2.5, min_depth) / (1.1* gaussian_func(100, 2.5, 100))
             grid[i, j] = grid[i, j] + math.log(p/(1 - p))
     return grid
 
@@ -291,7 +288,7 @@ def empty_grid(goal_grid: np.array) -> bool:
 def deg2rad(x: float) -> float:
     return x*math.pi/180
 
-def placing_algorithm(grid: np.array, d: float, grid_start: np.array, depth_array: np.array) -> list:
+def placing_algorithm(grid: np.array, d: float, grid_start: np.array, depth_array: np.array, depth) -> list:
     rows = 20
     columns = 20
     D = math.ceil(d/(0.5/20)) # 0.5m je velicina kutije, pa je Grid_resolution = 0.5/20
@@ -300,23 +297,34 @@ def placing_algorithm(grid: np.array, d: float, grid_start: np.array, depth_arra
         for j in range(columns-D):
             goal_grid = grid[i: i+D, j: j+D]
             if empty_grid(goal_grid):
-                x = grid_start[i, j, 0]+D*(0.5/20)
-                y = grid_start[i, j, 1]+D*(0.5/20)
-                alpha = math.sqrt((y/deg2rad(640)*deg2rad(62))**2+(x/deg2rad(480)*deg2rad(48.6))**2)
-                alpha = deg2rad(alpha)
-                distance = depth_array[grid_start[i, j, 0], grid_start[i, j, 1]]
+                x = grid_start[i + D//2, j + D//2, 0]
+                y = grid_start[i + D//2, j + D//2, 1]
                 sredina = np.array(depth_array.shape)//2
-                gamma = math.atan2((x-sredina[0]), (y-sredina[1]))
-                print(x, y, sredina, alpha, gamma, distance)
+                alpha = math.atan(math.sqrt(math.tan((x-sredina[0])*1.047/640)**2+math.tan((y-sredina[1])*1.047/640)**2))
+                distance = depth_array[int(y), int(x)]
+                
+                img1 = np.zeros([depth.shape[0], depth.shape[1], 3])
+                img1[:, :, 0] = depth
+                img1[:, :, 1] = depth
+                img1[:, :, 2] = depth
+                
+                img1[int(y), int(x), 0] = 255
+                img1[int(y), int(x), 1] = 0
+                img1[int(y), int(x), 2] = 0
+                
+                cv2.imwrite('./src/diplomski/test_slike/mesto.png', img1)
+                print(x, y, sredina, alpha, distance)
+                print(depth_array[sredina[0], sredina[1]])
                 z_coordinate = distance*math.cos(alpha)
-                dist1 = distance*math.sin(alpha)
-                x_coordinate = dist1*math.cos(gamma)
-                y_coordinate = dist1*math.sin(gamma)
+                x_coordinate = -z_coordinate*math.sin((y-sredina[0])*1.047/640)
+                y_coordinate = -z_coordinate*math.sin((x-sredina[1])*1.047/640)
                 return [x_coordinate, y_coordinate, z_coordinate]
 
 def main1(depth_array: np.array):
     global grid
     global pab
+    d = 0.05
+    gripper_size = 0.05
     depth = np.copy(depth_array)
     print(depth.shape)
     cv2.normalize(depth, depth, 0, 1, cv2.NORM_MINMAX)
@@ -358,23 +366,35 @@ def main1(depth_array: np.array):
     
     p3, p1, p2, _ = point_order(box)
     
-    v1 = (p2-p1)/20
-    v2 = (p3-p1)/20
+    v1 = (p2-p1)/22
+    v2 = (p3-p1)/22
     tackex = []
     tackey =[]
     p11 = np.copy(p1)
     p12 = np.copy(p1)
-    for i in range(20):
-        p11 = p11 + v1
-        p12 = p12 + v2
+    for i in range(22):
         tackex.append(p11)
         tackey.append(p12)
+        p11 = p11 + v1
+        p12 = p12 + v2
         
-    grid_start = np.zeros([20, 20, 2], dtype='int')
+    grid_start = np.zeros([22, 22, 2], dtype='int')
+    for i in range(22):
+        for j in range(22):
+            grid_start[i, j, :] = np.floor(tackex[i]+v2*j)
+    grid_start = grid_start[2:, 2:, :]
+    img1 = np.zeros([depth.shape[0], depth.shape[1], 3])
+    img1[:, :, 0] = depth
+    img1[:, :, 1] = depth
+    img1[:, :, 2] = depth
+
     for i in range(20):
         for j in range(20):
-            grid_start[i, j, :] = np.floor(tackex[i]+v2*j)
-            
+            img1[grid_start[i, j, 1], grid_start[i, j, 0], 0] = 255
+            img1[grid_start[i, j, 1], grid_start[i, j, 0], 2] = 0
+            img1[grid_start[i, j, 1], grid_start[i, j, 0], 1] = 0
+    cv2.imwrite('./src/diplomski/test_slike/grid.png', img1)
+    
     grid = update_grid(grid, depth, grid_start, v1, v2)
     bel = 1 - 1/(1-np.exp(grid))
     img1 = np.zeros([400, 400])
@@ -382,9 +402,9 @@ def main1(depth_array: np.array):
         for j in range(20):
             img1[20*i:20*(i+1), 20*j:20*(j+1)] = int(bel[i, j]*255)
     cv2.imwrite('./src/diplomski/test_slike/bel.png', img1)
-    pab.publish(Float64MultiArray(data = np.array(placing_algorithm(grid, 0.1, grid_start, depth_array))))
-    sys.exit()
-    #print(placing_algorithm(grid, 0.1, grid_start, depth_array))
+    pab.publish(Float64MultiArray(data = np.array(placing_algorithm(grid, d + gripper_size, grid_start, depth_array, depth))))
+    print(placing_algorithm(grid, d + gripper_size, grid_start, depth_array, depth))
+
        
 def image_callback(data):
     rospy.loginfo("Received an image!")
@@ -403,8 +423,8 @@ def main():
     # Define your image topic
     image_topic = "/camera/depth/image_raw"
     # Set up your subscriber and define its callback
-    rospy.Subscriber(image_topic, Image, image_callback)
-    pab = rospy.Publisher("/target_coordinates", Float64MultiArray, queue_size=1)
+    rospy.Subscriber(image_topic, Image, image_callback, queue_size=1)
+    pab = rospy.Publisher("/target_coordinates", Float64MultiArray, queue_size=0)
     # Spin until ctrl + c
     rospy.spin()
 
