@@ -53,13 +53,7 @@
       <static>false</static>
     </include>
     
-    <!-- cricket_ball model -->
-    <include>
-      <uri>model://cricket_ball</uri>
-      <static>false</static>
-      <pose>0 -0.8 1 0 0 0</pose>
-      <static>false</static>
-    </include>
+
 
     <!-- cube_20k model -->
     <include>
