@@ -9,12 +9,15 @@ import cv2
 import numpy as np
 import math
 from std_msgs.msg import Float64MultiArray
+from std_msgs.msg import Int16
 import sys
+
 
 # Instantiate CvBridge
 bridge = CvBridge()
 grid = np.zeros([20, 20])
 pab = 0
+send_coords = 1
 
 def distance(P1: np.array, P2: np.array, P3: np.array) -> float:
     """
@@ -280,6 +283,8 @@ def update_grid(grid: np.array, img: np.array, grid_start: np.array, vx: np.arra
             min_depth = min_cell_depth(img, grid_start, i, j, vx, vy)
             p = gaussian_func(100, 2.5, min_depth) / (1.1* gaussian_func(100, 2.5, 100))
             grid[i, j] = grid[i, j] + math.log(p/(1 - p))
+    grid[grid<-1] = -1
+    grid[grid>1] = 1
     return grid
 
 def empty_grid(goal_grid: np.array) -> bool:
@@ -293,8 +298,8 @@ def placing_algorithm(grid: np.array, d: float, grid_start: np.array, depth_arra
     columns = 20
     D = math.ceil(d/(0.5/20)) # 0.5m je velicina kutije, pa je Grid_resolution = 0.5/20
     print(D)
-    for i in range(rows-D):
-        for j in range(columns-D):
+    for i in range(1, rows-D):
+        for j in range(1, columns-D):
             goal_grid = grid[i: i+D, j: j+D]
             if empty_grid(goal_grid):
                 x = grid_start[i + D//2, j + D//2, 0]
@@ -402,8 +407,11 @@ def main1(depth_array: np.array):
         for j in range(20):
             img1[20*i:20*(i+1), 20*j:20*(j+1)] = int(bel[i, j]*255)
     cv2.imwrite('./src/diplomski/test_slike/bel.png', img1)
-    pab.publish(Float64MultiArray(data = np.array(placing_algorithm(grid, d + gripper_size, grid_start, depth_array, depth))))
-    print(placing_algorithm(grid, d + gripper_size, grid_start, depth_array, depth))
+    global send_coords
+    if send_coords == 1:
+    	pab.publish(Float64MultiArray(data = np.array(placing_algorithm(grid, d + gripper_size, grid_start, depth_array, depth))))
+    	send_coords = 0
+    	print(placing_algorithm(grid, d + gripper_size, grid_start, depth_array, depth))
 
        
 def image_callback(data):
@@ -416,14 +424,22 @@ def image_callback(data):
         
     except CvBridgeError as e:
             raise CvBridgeError(e)
+def robot_callback(data):
+    rospy.loginfo("Received an robot signal!")
+    global send_coords
+    send_coords = 1
                 
 def main():
     global pab
+    global send_coords
+    send_coords = 1
     rospy.init_node('image_listener')
     # Define your image topic
     image_topic = "/camera/depth/image_raw"
+    robot_topic = "/coordinates_indicator"
     # Set up your subscriber and define its callback
     rospy.Subscriber(image_topic, Image, image_callback, queue_size=1)
+    rospy.Subscriber(robot_topic, Int16, robot_callback, queue_size=1)
     pab = rospy.Publisher("/target_coordinates", Float64MultiArray, queue_size=0)
     # Spin until ctrl + c
     rospy.spin()

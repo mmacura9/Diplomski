@@ -8,7 +8,7 @@ from franka_interface import robot_params
 from franka_tools import collision_behaviour_interface as cbi
 from quaternion import as_float_array
 from std_msgs.msg import Float64MultiArray
-
+from std_msgs.msg import Int16
 
 # define globals
 r_arm = 0
@@ -57,6 +57,7 @@ def backup_function():
 	r.execute_plan(plan)
 
 	print("Back to neutral")
+	
 
 def camera2robot_base(pos):
 	new_pos = [pos[0]+0.2, pos[1]+0.5, 1.5 - pos[2]]
@@ -139,7 +140,7 @@ def coords_callback(floatArray):
 	print("Back to neutral")
 	
 	
-	
+	pub.publish(1)
 	
 
 def main():
@@ -149,6 +150,7 @@ def main():
 	global r
 	global r_collision
 	global available_blocks
+	global pub
 	
 	rospy.init_node("panda_demo")
 	
@@ -170,6 +172,8 @@ def main():
 	coords_topic = "/target_coordinates"
 	# Set up your subscriber and define its callback
 	rospy.Subscriber(coords_topic, Float64MultiArray, coords_callback, queue_size=1)
+	# Set up your publisher
+	pub = rospy.Publisher('/coordinates_indicator', Int16, queue_size=10)
 	# Spin until ctrl + c
 	rospy.spin()
 

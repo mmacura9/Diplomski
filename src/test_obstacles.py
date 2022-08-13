@@ -27,11 +27,12 @@ pos = initial_pose['position']
 ori = initial_pose['orientation']
 
 #set box expected position
-pos1 = [0.32, -0.32, 0.2]
-pos2 = [0.32, -0.32, 0.13]
+pos0 = [0.25, -0.3, 0.25]
+pos1 = [0.25, -0.3, 0.2]
+pos2 = [0.25, -0.3, 0.13]
 
 
-r_planning.add_box("coll_object", utils.create_pose_stamped_msg([0.2, -0.15, 0.0], ori), size=(0.05, 0.05, 5))
+r_planning.add_box("coll_object", utils.create_pose_stamped_msg([0.25, -0.15, 0.0], ori), size=(0.05, 0.05, 5))
 
 #r_planning.add_box("kutija", utils.create_pose_msg([0.2, -0.15, 0.0], ori) , size=(0.05, 0.05, 5))
 
@@ -47,11 +48,12 @@ r_planning.add_box("coll_object", utils.create_pose_stamped_msg([0.2, -0.15, 0.0
 r_gripper.open()
 print("gripper opened")
 
-pose_msgs =  [utils.create_pose_msg(pos1, ori)]
+pose_msgs =  [utils.create_pose_msg(pos0, ori), utils.create_pose_msg(pos1, ori)]
 #plan, f = r.plan_cartesian_path(pose_msgs)
 r._arm_group.set_pose_targets(pose_msgs)
 print("Setup done!")
 
+r.go_to_cartesian_pose(utils.create_pose_msg(pos1, ori))
 r.go_to_cartesian_pose(utils.create_pose_msg(pos2, ori))
 
 print("Movement done")
